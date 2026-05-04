@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Workout Tracker</title>
+  <style>
+    :root {
+      --border: #d9d9d9;
+      --text: #222;
+      --muted: #666;
+      --bg: #fafafa;
+      --red: #d64545;
+      --green: #d9f8e6;
+      --green-border: #84d9a2;
+      --btn: #1f6feb;
+      --btn-hover: #185ac0;
+      --card-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 24px;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+    }
+
+    .app {
+      max-width: 880px;
+      margin: 0 auto;
+    }
+
+    .app-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    .app-header h1 {
+      margin: 0;
+      font-size: 22px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 7px;
+      padding: 9px 12px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .btn-primary {
+      background: var(--btn);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: var(--btn-hover);
+    }
+
+    .btn-danger {
+      background: #f1f1f1;
+      color: #a32020;
+      border: 1px solid var(--border);
+    }
+
+    .btn-danger:hover {
+      background: #ffe8e8;
+    }
+
+    .exercises-empty {
+      text-align: center;
+      color: var(--muted);
+      padding: 32px 16px;
+      border: 1px dashed var(--border);
+      border-radius: 10px;
+      background: #fff;
+    }
+
+    /* One block per exercise */
+    .exercise-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 18px;
+      margin-bottom: 18px;
+      box-shadow: var(--card-shadow);
+    }
+
+    .exercise-card-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      gap: 12px;
+      margin-bottom: 14px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .name-field {
+      flex: 1 1 220px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .name-field label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+    }
+
+    .name-field input[type="text"] {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 15px;
+      outline: none;
+    }
+
+    .name-field input[type="text"]:focus {
+      border-color: var(--btn);
+      box-shadow: 0 0 0 2px rgba(31, 111, 235, 0.15);
+    }
+
+    .exercise-card-header .toolbar-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .toolbar {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 12px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      border: 1px solid var(--border);
+      padding: 10px;
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    th {
+      background: #f5f5f5;
+      font-weight: 600;
+    }
+
+    .set-cell {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-width: 220px;
+    }
+
+    .set-label {
+      min-width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      background: #fff;
+    }
+
+    .set-label.warmup {
+      color: #7a5b00;
+      background: #fff7dc;
+      border-color: #f0d06d;
+    }
+
+    .set-label.failed {
+      color: #fff;
+      background: var(--red);
+      border-color: #b93636;
+    }
+
+    .set-label.normal {
+      color: #2d2d2d;
+      background: #efefef;
+    }
+
+    select,
+    input[type="number"] {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 7px 8px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    select:focus,
+    input[type="number"]:focus {
+      border-color: var(--btn);
+      box-shadow: 0 0 0 2px rgba(31, 111, 235, 0.15);
+    }
+
+    .delete-btn {
+      background: #efefef;
+      color: #333;
+      padding: 7px 9px;
+      line-height: 1;
+    }
+
+    .delete-btn:hover {
+      background: #e0e0e0;
+    }
+
+    .done-toggle {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: transparent;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.15s ease;
+    }
+
+    .done-toggle.active {
+      color: #fff;
+      background: #2da562;
+      border-color: #2da562;
+    }
+
+    tr.completed {
+      background: var(--green);
+      border-color: var(--green-border);
+    }
+
+    .hint {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 12px;
+      text-align: right;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <h1>Workout Tracker</h1>
+      <button type="button" id="addExerciseBtn" class="btn-primary">+ Add Exercise</button>
+    </header>
+
+    <!-- Shared suggestions for every exercise name input (list="exercise-name-suggestions") -->
+    <datalist id="exercise-name-suggestions"></datalist>
+
+    <div id="exercisesMount" aria-live="polite"></div>
+  </div>
+
+  <script>
+    /**
+     * DATA MODEL (in-memory)
+     * ----------------------
+     * exercises: Exercise[]
+     *
+     * Exercise:
+     *   - id: string          (stable id for DOM + lookups)
+     *   - name: string        (display / custom name)
+     *   - sets: SetRow[]      (only this exercise’s sets; numbering is per-exercise)
+     *
+     * SetRow:
+     *   - id: string
+     *   - type: 'normal' | 'warmup' | 'failed'
+     *   - weight: string      (mirrors <input> value for simple binding)
+     *   - reps: string
+     *   - done: boolean
+     *
+     * usedExerciseNames: string[]
+     *   - Distinct names the user has committed (blur), used to fill <datalist> options.
+     */
+    (function () {
+      "use strict";
+
+      let idSeq = 0;
+      function uid(prefix) {
+        idSeq += 1;
+        return prefix + "-" + idSeq + "-" + Date.now().toString(36);
+      }
+
+      /** @type {{ id: string; name: string; sets: { id: string; type: string; weight: string; reps: string; done: boolean }[] }[]} */
+      let exercises = [];
+
+      /** @type {string[]} */
+      let usedExerciseNames = [];
+
+      const exercisesMount = document.getElementById("exercisesMount");
+      const addExerciseBtn = document.getElementById("addExerciseBtn");
+      const suggestionList = document.getElementById("exercise-name-suggestions");
+
+      function rememberExerciseName(name) {
+        const trimmed = (name || "").trim();
+        if (!trimmed) return;
+        if (!usedExerciseNames.includes(trimmed)) {
+          usedExerciseNames.push(trimmed);
+          refreshSuggestionDatalist();
+        }
+      }
+
+      function refreshSuggestionDatalist() {
+        suggestionList.innerHTML = "";
+        usedExerciseNames.forEach((n) => {
+          const opt = document.createElement("option");
+          opt.value = n;
+          suggestionList.appendChild(opt);
+        });
+      }
+
+      function findExercise(exerciseId) {
+        return exercises.find((e) => e.id === exerciseId);
+      }
+
+      /**
+       * Normal-set labels are 1..N within this tbody only.
+       */
+      function updateAllSetLabels(tbody) {
+        let normalCount = 0;
+        const rows = tbody.querySelectorAll("tr");
+
+        rows.forEach((row) => {
+          const setType = row.querySelector(".set-type").value;
+          const label = row.querySelector(".set-label");
+          label.className = "set-label";
+
+          if (setType === "warmup") {
+            label.textContent = "W";
+            label.classList.add("warmup");
+          } else if (setType === "failed") {
+            label.textContent = "F";
+            label.classList.add("failed");
+          } else {
+            normalCount += 1;
+            label.textContent = String(normalCount);
+            label.classList.add("normal");
+          }
+        });
+      }
+
+      function syncRowFromDom(row, setId, exerciseId) {
+        const ex = findExercise(exerciseId);
+        if (!ex) return;
+        const set = ex.sets.find((s) => s.id === setId);
+        if (!set) return;
+
+        set.type = row.querySelector(".set-type").value;
+        set.weight = row.querySelector('input[data-field="weight"]').value;
+        set.reps = row.querySelector('input[data-field="reps"]').value;
+        set.done = row.querySelector(".done-toggle").classList.contains("active");
+      }
+
+      function createSetRow(exerciseId, set) {
+        const row = document.createElement("tr");
+        if (set.done) row.classList.add("completed");
+
+        row.innerHTML =
+          '<td>' +
+          '<div class="set-cell">' +
+          '<select class="set-type">' +
+          '<option value="normal">Normal set</option>' +
+          '<option value="warmup">Warm-up set</option>' +
+          '<option value="failed">Failed set</option>' +
+          "</select>" +
+          '<span class="set-label normal"></span>' +
+          '<button type="button" class="delete-btn" title="Delete row">🗑</button>' +
+          "</div>" +
+          "</td>" +
+          '<td><input type="number" min="0" step="0.5" placeholder="kg" data-field="weight" /></td>' +
+          '<td><input type="number" min="0" step="1" placeholder="reps" data-field="reps" /></td>' +
+          '<td><button type="button" class="done-toggle" title="Toggle done">✓</button></td>';
+
+        row.querySelector(".set-type").value = set.type;
+        row.querySelector('[data-field="weight"]').value = set.weight;
+        row.querySelector('[data-field="reps"]').value = set.reps;
+        const doneToggle = row.querySelector(".done-toggle");
+        if (set.done) doneToggle.classList.add("active");
+
+        const setTypeSelect = row.querySelector(".set-type");
+        const deleteBtn = row.querySelector(".delete-btn");
+
+        setTypeSelect.addEventListener("change", () => {
+          syncRowFromDom(row, set.id, exerciseId);
+          updateAllSetLabels(row.closest("tbody"));
+        });
+
+        deleteBtn.addEventListener("click", () => {
+          const ex = findExercise(exerciseId);
+          if (!ex) return;
+          const tbody = row.closest("tbody");
+          ex.sets = ex.sets.filter((s) => s.id !== set.id);
+          row.remove();
+          if (tbody) updateAllSetLabels(tbody);
+        });
+
+        doneToggle.addEventListener("click", () => {
+          doneToggle.classList.toggle("active");
+          row.classList.toggle("completed");
+          syncRowFromDom(row, set.id, exerciseId);
+        });
+
+        row.querySelector('[data-field="weight"]').addEventListener("input", () => {
+          syncRowFromDom(row, set.id, exerciseId);
+        });
+        row.querySelector('[data-field="reps"]').addEventListener("input", () => {
+          syncRowFromDom(row, set.id, exerciseId);
+        });
+
+        return row;
+      }
+
+      function addSetToExercise(exerciseId, tbody) {
+        const ex = findExercise(exerciseId);
+        if (!ex) return;
+
+        const newSet = {
+          id: uid("set"),
+          type: "normal",
+          weight: "",
+          reps: "",
+          done: false,
+        };
+        ex.sets.push(newSet);
+        tbody.appendChild(createSetRow(exerciseId, newSet));
+        updateAllSetLabels(tbody);
+      }
+
+      function buildExerciseCard(ex) {
+        const section = document.createElement("section");
+        section.className = "exercise-card";
+        section.dataset.exerciseId = ex.id;
+
+        const header = document.createElement("div");
+        header.className = "exercise-card-header";
+
+        const nameWrap = document.createElement("div");
+        nameWrap.className = "name-field";
+        const nameLabel = document.createElement("label");
+        nameLabel.htmlFor = "ex-name-" + ex.id;
+        nameLabel.textContent = "Exercise name";
+        const nameInput = document.createElement("input");
+        nameInput.type = "text";
+        nameInput.id = "ex-name-" + ex.id;
+        nameInput.setAttribute("list", "exercise-name-suggestions");
+        nameInput.placeholder = "e.g. Bench press";
+        nameInput.value = ex.name;
+        nameInput.addEventListener("input", () => {
+          ex.name = nameInput.value;
+        });
+        nameInput.addEventListener("blur", () => {
+          rememberExerciseName(nameInput.value);
+        });
+        nameWrap.appendChild(nameLabel);
+        nameWrap.appendChild(nameInput);
+
+        const actions = document.createElement("div");
+        actions.className = "toolbar-actions";
+        const removeExBtn = document.createElement("button");
+        removeExBtn.type = "button";
+        removeExBtn.className = "btn-danger";
+        removeExBtn.textContent = "Remove exercise";
+        removeExBtn.addEventListener("click", () => {
+          exercises = exercises.filter((e) => e.id !== ex.id);
+          section.remove();
+          if (exercises.length === 0) renderEmptyState();
+        });
+        actions.appendChild(removeExBtn);
+
+        header.appendChild(nameWrap);
+        header.appendChild(actions);
+
+        const toolbar = document.createElement("div");
+        toolbar.className = "toolbar";
+        const addSetBtn = document.createElement("button");
+        addSetBtn.type = "button";
+        addSetBtn.className = "btn-primary";
+        addSetBtn.textContent = "+ Add Set";
+        const table = document.createElement("table");
+        const thead = document.createElement("thead");
+        thead.innerHTML =
+          "<tr>" +
+          "<th>Set type</th>" +
+          "<th>Weight (kg)</th>" +
+          "<th>Reps</th>" +
+          "<th>Done</th>" +
+          "</tr>";
+        const tbody = document.createElement("tbody");
+
+        addSetBtn.addEventListener("click", () => {
+          addSetToExercise(ex.id, tbody);
+        });
+
+        toolbar.appendChild(addSetBtn);
+        table.appendChild(thead);
+        table.appendChild(tbody);
+
+        const hint = document.createElement("p");
+        hint.className = "hint";
+        hint.textContent =
+          "W = warm-up, F = failed; normal sets are numbered 1…n within this exercise only.";
+
+        section.appendChild(header);
+        section.appendChild(toolbar);
+        section.appendChild(table);
+        section.appendChild(hint);
+
+        ex.sets.forEach((set) => {
+          tbody.appendChild(createSetRow(ex.id, set));
+        });
+        updateAllSetLabels(tbody);
+
+        return section;
+      }
+
+      function renderEmptyState() {
+        exercisesMount.innerHTML = "";
+        const p = document.createElement("p");
+        p.className = "exercises-empty";
+        p.textContent = 'No exercises yet. Click "Add Exercise" to start.';
+        exercisesMount.appendChild(p);
+      }
+
+      function mountExerciseCard(ex) {
+        const empty = exercisesMount.querySelector(".exercises-empty");
+        if (empty) empty.remove();
+        exercisesMount.appendChild(buildExerciseCard(ex));
+      }
+
+      function addExercise(initialName) {
+        const ex = {
+          id: uid("ex"),
+          name: initialName != null ? initialName : "",
+          sets: [
+            {
+              id: uid("set"),
+              type: "normal",
+              weight: "",
+              reps: "",
+              done: false,
+            },
+          ],
+        };
+        exercises.push(ex);
+        mountExerciseCard(ex);
+        if (ex.name.trim()) rememberExerciseName(ex.name);
+      }
+
+      addExerciseBtn.addEventListener("click", () => {
+        addExercise("");
+      });
+
+      // Initial: one exercise, one set (same usability as before).
+      addExercise("");
+
+      refreshSuggestionDatalist();
+    })();
+  </script>
+</body>
+</html>
