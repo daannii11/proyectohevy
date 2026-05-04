@@ -16,6 +16,54 @@
       --btn: #1f6feb;
       --btn-hover: #185ac0;
       --card-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+      /* Surfaces (overridden in body.dark — keeps one rule set, no duplicated selectors) */
+      --card-bg: #fff;
+      --thead-bg: #f5f5f5;
+      --divider: #eee;
+      --input-bg: #fff;
+      --focus-ring: rgba(31, 111, 235, 0.15);
+      --set-normal-fg: #2d2d2d;
+      --set-normal-bg: #efefef;
+      --label-warmup-fg: #7a5b00;
+      --label-warmup-bg: #fff7dc;
+      --label-warmup-border: #f0d06d;
+      --delete-bg: #efefef;
+      --delete-fg: #333;
+      --delete-hover: #e0e0e0;
+      --danger-bg: #f1f1f1;
+      --danger-hover: #ffe8e8;
+      --danger-fg: #a32020;
+    }
+
+    /* Dark palette: same variable names, different values (instant toggle, no reload). */
+    body.dark {
+      color-scheme: dark;
+      --border: #3d4450;
+      --text: #eaeef2;
+      --muted: #9aa3ad;
+      --bg: #121418;
+      --red: #e05555;
+      --green: #1a3326;
+      --green-border: #2d6a45;
+      --btn: #3b82f6;
+      --btn-hover: #60a5fa;
+      --card-shadow: 0 2px 14px rgba(0, 0, 0, 0.4);
+      --card-bg: #1a1d24;
+      --thead-bg: #232730;
+      --divider: #2a2f3a;
+      --input-bg: #22262e;
+      --focus-ring: rgba(96, 165, 250, 0.22);
+      --set-normal-fg: #e2e4e8;
+      --set-normal-bg: #2c323c;
+      --label-warmup-fg: #f0d586;
+      --label-warmup-bg: #3d3518;
+      --label-warmup-border: #6b5a22;
+      --delete-bg: #2c323c;
+      --delete-fg: #dce0e8;
+      --delete-hover: #363d4a;
+      --danger-bg: #2a2426;
+      --danger-hover: #3a282c;
+      --danger-fg: #f0a8a8;
     }
 
     * {
@@ -28,6 +76,7 @@
       font-family: Arial, Helvetica, sans-serif;
       color: var(--text);
       background: var(--bg);
+      color-scheme: light;
     }
 
     .app {
@@ -49,6 +98,28 @@
       font-size: 22px;
     }
 
+    .app-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    /* Theme control: not primary CTA — neutral so “Add exercise” stays the main action. */
+    .btn-theme {
+      background: var(--card-bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 9px 12px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .btn-theme:hover {
+      background: var(--thead-bg);
+    }
+
     button {
       border: 0;
       border-radius: 7px;
@@ -67,13 +138,13 @@
     }
 
     .btn-danger {
-      background: #f1f1f1;
-      color: #a32020;
+      background: var(--danger-bg);
+      color: var(--danger-fg);
       border: 1px solid var(--border);
     }
 
     .btn-danger:hover {
-      background: #ffe8e8;
+      background: var(--danger-hover);
     }
 
     .exercises-empty {
@@ -82,12 +153,12 @@
       padding: 32px 16px;
       border: 1px dashed var(--border);
       border-radius: 10px;
-      background: #fff;
+      background: var(--card-bg);
     }
 
     /* One block per exercise */
     .exercise-card {
-      background: #fff;
+      background: var(--card-bg);
       border: 1px solid var(--border);
       border-radius: 10px;
       padding: 16px 18px;
@@ -102,7 +173,7 @@
       gap: 12px;
       margin-bottom: 14px;
       padding-bottom: 12px;
-      border-bottom: 1px solid #eee;
+      border-bottom: 1px solid var(--divider);
     }
 
     .name-field {
@@ -125,11 +196,13 @@
       padding: 8px 10px;
       font-size: 15px;
       outline: none;
+      background: var(--input-bg);
+      color: var(--text);
     }
 
     .name-field input[type="text"]:focus {
       border-color: var(--btn);
-      box-shadow: 0 0 0 2px rgba(31, 111, 235, 0.15);
+      box-shadow: 0 0 0 2px var(--focus-ring);
     }
 
     .exercise-card-header .toolbar-actions {
@@ -158,7 +231,7 @@
     }
 
     th {
-      background: #f5f5f5;
+      background: var(--thead-bg);
       font-weight: 600;
     }
 
@@ -179,13 +252,13 @@
       align-items: center;
       justify-content: center;
       font-weight: 700;
-      background: #fff;
+      background: var(--input-bg);
     }
 
     .set-label.warmup {
-      color: #7a5b00;
-      background: #fff7dc;
-      border-color: #f0d06d;
+      color: var(--label-warmup-fg);
+      background: var(--label-warmup-bg);
+      border-color: var(--label-warmup-border);
     }
 
     .set-label.failed {
@@ -195,8 +268,8 @@
     }
 
     .set-label.normal {
-      color: #2d2d2d;
-      background: #efefef;
+      color: var(--set-normal-fg);
+      background: var(--set-normal-bg);
     }
 
     select,
@@ -207,23 +280,25 @@
       padding: 7px 8px;
       font-size: 14px;
       outline: none;
+      background: var(--input-bg);
+      color: var(--text);
     }
 
     select:focus,
     input[type="number"]:focus {
       border-color: var(--btn);
-      box-shadow: 0 0 0 2px rgba(31, 111, 235, 0.15);
+      box-shadow: 0 0 0 2px var(--focus-ring);
     }
 
     .delete-btn {
-      background: #efefef;
-      color: #333;
+      background: var(--delete-bg);
+      color: var(--delete-fg);
       padding: 7px 9px;
       line-height: 1;
     }
 
     .delete-btn:hover {
-      background: #e0e0e0;
+      background: var(--delete-hover);
     }
 
     .done-toggle {
@@ -231,7 +306,7 @@
       height: 32px;
       border-radius: 50%;
       border: 1px solid var(--border);
-      background: #fff;
+      background: var(--input-bg);
       color: transparent;
       display: inline-flex;
       align-items: center;
@@ -262,10 +337,31 @@
   </style>
 </head>
 <body>
+  <!-- Apply saved theme as soon as <body> exists to reduce light→dark flash on reload. -->
+  <script>
+    (function () {
+      try {
+        if (localStorage.getItem("proyectohevy-theme") === "dark") {
+          document.body.classList.add("dark");
+        }
+      } catch (_) {}
+    })();
+  </script>
   <div class="app">
     <header class="app-header">
       <h1>Workout Tracker</h1>
-      <button type="button" id="addExerciseBtn" class="btn-primary">+ Add Exercise</button>
+      <div class="app-header-actions">
+        <button type="button" id="addExerciseBtn" class="btn-primary">+ Add Exercise</button>
+        <button
+          type="button"
+          id="themeToggleBtn"
+          class="btn-theme"
+          aria-pressed="false"
+          title="Toggle light / dark theme"
+        >
+          Dark mode
+        </button>
+      </div>
     </header>
 
     <!-- Shared suggestions for every exercise name input (list="exercise-name-suggestions") -->
@@ -691,6 +787,37 @@
         document.getElementById("addExerciseBtn"),
         document.getElementById("exercise-name-suggestions")
       );
+    })();
+
+    /**
+     * Theme toggle: `body.dark` switches CSS variables (see <style>).
+     * Preference stored separately from workout data under `proyectohevy-theme`.
+     */
+    (function () {
+      "use strict";
+
+      var THEME_KEY = "proyectohevy-theme";
+      var btn = document.getElementById("themeToggleBtn");
+      if (!btn) return;
+
+      function isDark() {
+        return document.body.classList.contains("dark");
+      }
+
+      function applyTheme(dark) {
+        document.body.classList.toggle("dark", dark);
+        try {
+          localStorage.setItem(THEME_KEY, dark ? "dark" : "light");
+        } catch (_) {}
+        btn.setAttribute("aria-pressed", dark ? "true" : "false");
+        btn.textContent = dark ? "Light mode" : "Dark mode";
+      }
+
+      btn.addEventListener("click", function () {
+        applyTheme(!isDark());
+      });
+
+      applyTheme(isDark());
     })();
   </script>
 </body>
