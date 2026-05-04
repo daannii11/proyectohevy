@@ -22,11 +22,12 @@
       --divider: #eee;
       --input-bg: #fff;
       --focus-ring: rgba(31, 111, 235, 0.15);
-      --set-normal-fg: #2d2d2d;
-      --set-normal-bg: #efefef;
-      --label-warmup-fg: #7a5b00;
-      --label-warmup-bg: #fff7dc;
-      --label-warmup-border: #f0d06d;
+      /* Set-type badge: one neutral circle; type classes only change text color. */
+      --set-label-bg: #efefef;
+      --set-label-border: var(--border);
+      --label-warmup-fg: #a16207;
+      --label-failed-fg: var(--red);
+      --label-dropset-fg: #1d4ed8;
       --delete-bg: #efefef;
       --delete-fg: #333;
       --delete-hover: #e0e0e0;
@@ -53,11 +54,11 @@
       --divider: #2a2f3a;
       --input-bg: #22262e;
       --focus-ring: rgba(96, 165, 250, 0.22);
-      --set-normal-fg: #e2e4e8;
-      --set-normal-bg: #2c323c;
-      --label-warmup-fg: #f0d586;
-      --label-warmup-bg: #3d3518;
-      --label-warmup-border: #6b5a22;
+      --set-label-bg: #2c323c;
+      --set-label-border: var(--border);
+      --label-warmup-fg: #fcd34d;
+      --label-failed-fg: #f87171;
+      --label-dropset-fg: #60a5fa;
       --delete-bg: #2c323c;
       --delete-fg: #dce0e8;
       --delete-hover: #363d4a;
@@ -247,29 +248,29 @@
       min-width: 32px;
       height: 32px;
       border-radius: 50%;
-      border: 1px solid var(--border);
+      border: 1px solid var(--set-label-border);
       display: inline-flex;
       align-items: center;
       justify-content: center;
       font-weight: 700;
-      background: var(--input-bg);
+      background: var(--set-label-bg);
+      color: var(--text);
     }
 
     .set-label.warmup {
       color: var(--label-warmup-fg);
-      background: var(--label-warmup-bg);
-      border-color: var(--label-warmup-border);
     }
 
     .set-label.failed {
-      color: #fff;
-      background: var(--red);
-      border-color: #b93636;
+      color: var(--label-failed-fg);
+    }
+
+    .set-label.dropset {
+      color: var(--label-dropset-fg);
     }
 
     .set-label.normal {
-      color: var(--set-normal-fg);
-      background: var(--set-normal-bg);
+      color: var(--text);
     }
 
     select,
@@ -380,7 +381,7 @@
      * - createWorkoutApp(root): shell — suggestion datalist, empty state, Map registry keyed by exercise id,
      *   localStorage snapshot (debounced) so the workout survives refresh.
      *
-     * SetRow: { id, type, weight, reps, done }
+     * SetRow: { id, type: 'normal'|'warmup'|'failed'|'dropset', weight, reps, done }
      * ExerciseModel: { id, name, sets: SetRow[] }
      */
     (function () {
@@ -412,7 +413,12 @@
           } else if (setType === "failed") {
             label.textContent = "F";
             label.classList.add("failed");
+          } else if (setType === "dropset") {
+            /* Special type: fixed “D” badge; does not consume a normal-set index. */
+            label.textContent = "D";
+            label.classList.add("dropset");
           } else {
+            /* Only true normal sets advance 1…n. */
             normalCount += 1;
             label.textContent = String(normalCount);
             label.classList.add("normal");
@@ -444,7 +450,7 @@
 
       function normalizeSetRow(raw) {
         if (!raw || typeof raw !== "object") return null;
-        const type = ["normal", "warmup", "failed"].includes(raw.type) ? raw.type : "normal";
+        const type = ["normal", "warmup", "failed", "dropset"].includes(raw.type) ? raw.type : "normal";
         return {
           id: typeof raw.id === "string" && raw.id ? raw.id : uid("set"),
           type,
@@ -526,6 +532,7 @@
             '<option value="normal">Normal set</option>' +
             '<option value="warmup">Warm-up set</option>' +
             '<option value="failed">Failed set</option>' +
+            '<option value="dropset">Dropset</option>' +
             "</select>" +
             '<span class="set-label normal"></span>' +
             '<button type="button" class="delete-btn" title="Delete row">🗑</button>' +
@@ -639,7 +646,7 @@
           const hint = document.createElement("p");
           hint.className = "hint";
           hint.textContent =
-            "W = warm-up, F = failed; normal sets are numbered 1…n within this exercise only.";
+            "W = warm-up, D = dropset, F = failed; only normal sets are numbered 1…n within this exercise.";
 
           root.appendChild(header);
           root.appendChild(toolbar);
