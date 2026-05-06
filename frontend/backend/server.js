@@ -44,11 +44,15 @@ app.get("/test", async (req, res) => {
 // Get all exercises
 app.get("/exercises", async (req, res) => {
   try {
-    const result = await pool.query(
+    // 1) Read all rows from PostgreSQL, ordered by id.
+    const { rows } = await pool.query(
       "SELECT id, name FROM exercises ORDER BY id ASC"
     );
-    res.status(200).json(result.rows);
+
+    // 2) Return the list as JSON.
+    res.status(200).json(rows);
   } catch (error) {
+    // 3) Log the error and send a safe server error response.
     console.error("Error fetching exercises:", error);
     res.status(500).json({
       ok: false,
