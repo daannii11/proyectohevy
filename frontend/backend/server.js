@@ -1,10 +1,25 @@
 // Load environment variables from .env
 import "dotenv/config";
 import express from "express";
+import cors from "cors";
 import pg from "pg";
 
 const { Pool } = pg;
 const app = express();
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow tools without Origin header (curl, Postman, server-to-server).
+      if (!origin) return callback(null, true);
+
+      // Allow any localhost/127.0.0.1 port in development.
+      const isLocalhost = /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin);
+      if (isLocalhost) return callback(null, true);
+
+      return callback(new Error("Not allowed by CORS"));
+    },
+  })
+);
 app.use(express.json());
 
 // Root route to avoid "Cannot GET /"
