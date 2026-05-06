@@ -27,6 +27,27 @@ h1 {
   color: #555;
 }
 
+#exerciseForm {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+#exerciseNameInput {
+  flex: 1;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 10px;
+}
+
+#exerciseForm button {
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: #f0f0f0;
+  padding: 10px 14px;
+  cursor: pointer;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;

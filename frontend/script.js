@@ -2,6 +2,8 @@ const API_URL = "http://localhost:3000/exercises";
 
 const statusEl = document.getElementById("status");
 const tbodyEl = document.getElementById("exercisesBody");
+const formEl = document.getElementById("exerciseForm");
+const nameInputEl = document.getElementById("exerciseNameInput");
 
 function renderExercises(exercises) {
   tbodyEl.innerHTML = "";
@@ -49,5 +51,43 @@ async function loadExercises() {
     statusEl.textContent = "Error loading exercises. Check console logs.";
   }
 }
+
+async function createExercise(name) {
+  console.log("4) Creating exercise:", name);
+
+  try {
+    const response = await fetch(API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ name }),
+    });
+    console.log("5) Create response:", response);
+
+    if (!response.ok) {
+      throw new Error(`Create failed with status ${response.status}`);
+    }
+
+    const createdExercise = await response.json();
+    console.log("6) Created exercise:", createdExercise);
+
+    // Refresh table after successful creation.
+    await loadExercises();
+  } catch (error) {
+    console.error("Create error:", error);
+    statusEl.textContent = "Error creating exercise. Check console logs.";
+  }
+}
+
+formEl.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  const exerciseName = nameInputEl.value.trim();
+  if (!exerciseName) return;
+
+  await createExercise(exerciseName);
+  nameInputEl.value = "";
+});
 
 loadExercises();
