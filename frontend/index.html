@@ -1,35 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Workout Tracker</title>
-  <link rel="stylesheet" href="styles.css" />
-</head>
-<body>
-  <div class="app">
-    <header class="app-header">
-      <h1>Workout Tracker</h1>
-      <div class="app-header-actions">
-        <button type="button" id="addExerciseBtn" class="btn-primary">+ Add Exercise</button>
-        <button
-          type="button"
-          id="themeToggleBtn"
-          class="btn-theme"
-          aria-pressed="false"
-          title="Toggle light / dark theme"
-        >
-          Dark mode
-        </button>
-      </div>
-    </header>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Exercises Test Page</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="container">
+      <h1>Exercises (Backend Test)</h1>
+      <p id="status">Loading exercises...</p>
 
-    <!-- Shared suggestions for every exercise name input (list="exercise-name-suggestions") -->
-    <datalist id="exercise-name-suggestions"></datalist>
+      <table id="exercisesTable">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+          </tr>
+        </thead>
+        <tbody id="exercisesBody"></tbody>
+      </table>
+    </main>
 
-    <div id="exercisesMount" aria-live="polite"></div>
-  </div>
-
-  <script src="script.js"></script>
-</body>
+    <script src="script.js"></script>
+  </body>
 </html>
