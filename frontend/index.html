@@ -7,30 +7,7 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <main class="container">
-      <h1>Exercises (Backend Test)</h1>
-      <p id="status">Loading exercises...</p>
-      <form id="exerciseForm">
-        <input
-          id="exerciseNameInput"
-          type="text"
-          placeholder="New exercise name"
-          required
-        />
-        <button type="submit">Add exercise</button>
-      </form>
-
-      <table id="exercisesTable">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Name</th>
-          </tr>
-        </thead>
-        <tbody id="exercisesBody"></tbody>
-      </table>
-    </main>
-
-    <script src="script.js"></script>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
