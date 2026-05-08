@@ -22,25 +22,20 @@ h1 {
   margin-top: 0;
 }
 
-#status {
-  margin-bottom: 14px;
-  color: #555;
-}
-
-#exerciseForm {
+.exercise-form {
   display: flex;
   gap: 8px;
   margin-bottom: 14px;
 }
 
-#exerciseNameInput {
+.exercise-form input {
   flex: 1;
   border: 1px solid #ddd;
   border-radius: 6px;
   padding: 10px;
 }
 
-#exerciseForm button {
+.exercise-form button {
   border: 1px solid #ddd;
   border-radius: 6px;
   background: #f0f0f0;
