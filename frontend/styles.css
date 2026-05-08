@@ -10,7 +10,7 @@ body {
 }
 
 .container {
-  max-width: 700px;
+  max-width: 980px;
   margin: 40px auto;
   background: #fff;
   border: 1px solid #ddd;
@@ -57,4 +57,73 @@ td {
 
 thead {
   background: #f0f0f0;
+}
+
+.exercise-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.exercise-card {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 12px;
+  background: #fafafa;
+}
+
+.exercise-card h2 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-size: 20px;
+}
+
+.set-table input,
+.set-table select {
+  width: 100%;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 6px 8px;
+}
+
+.set-label {
+  font-weight: 700;
+}
+
+.set-label-w {
+  color: #b58900;
+}
+
+.set-label-f {
+  color: #cc0000;
+}
+
+.set-label-d {
+  color: #0057d9;
+}
+
+.row-completed {
+  background: #ecfdf3;
+}
+
+.row-completed td {
+  text-decoration: line-through;
+  color: #556;
+}
+
+.add-button,
+.danger-button {
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: #f0f0f0;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.danger-button {
+  color: #9d1f1f;
+}
+
+.empty-sets {
+  margin: 0 0 12px;
+  color: #666;
 }
