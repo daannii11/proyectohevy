@@ -144,6 +144,228 @@ app.put("/exercises/:id", async (req, res) => {
   }
 });
 
+const SET_TYPES = new Set(["warmup", "normal", "failed", "dropset"]);
+
+function parseOptionalKg(value) {
+  if (value === undefined) return undefined;
+  if (value === null || value === "") return null;
+  const n = Number(value);
+  if (!Number.isFinite(n) || n < 0) return null;
+  return n;
+}
+
+function parseOptionalReps(value) {
+  if (value === undefined) return undefined;
+  if (value === null || value === "") return null;
+  const n = parseInt(String(value), 10);
+  if (!Number.isInteger(n) || n < 0) return null;
+  return n;
+}
+
+async function exerciseExists(exerciseId) {
+  const { rows } = await pool.query("SELECT 1 FROM exercises WHERE id = $1", [exerciseId]);
+  return rows.length > 0;
+}
+
+// List sets for one exercise
+app.get("/exercises/:id/sets", async (req, res) => {
+  try {
+    const exerciseId = Number(req.params.id);
+    if (!Number.isInteger(exerciseId) || exerciseId <= 0) {
+      return res.status(400).json({
+        ok: false,
+        message: "Invalid exercise id",
+      });
+    }
+
+    if (!(await exerciseExists(exerciseId))) {
+      return res.status(404).json({
+        ok: false,
+        message: "Exercise not found",
+      });
+    }
+
+    const { rows } = await pool.query(
+      `SELECT id, exercise_id, type, kg, reps, completed, created_at
+       FROM sets
+       WHERE exercise_id = $1
+       ORDER BY created_at ASC, id ASC`,
+      [exerciseId]
+    );
+
+    res.status(200).json(rows);
+  } catch (error) {
+    console.error("Error fetching sets:", error);
+    res.status(500).json({
+      ok: false,
+      message: "Failed to fetch sets",
+    });
+  }
+});
+
+// Create a new set for an exercise
+app.post("/exercises/:id/sets", async (req, res) => {
+  try {
+    const exerciseId = Number(req.params.id);
+    if (!Number.isInteger(exerciseId) || exerciseId <= 0) {
+      return res.status(400).json({
+        ok: false,
+        message: "Invalid exercise id",
+      });
+    }
+
+    if (!(await exerciseExists(exerciseId))) {
+      return res.status(404).json({
+        ok: false,
+        message: "Exercise not found",
+      });
+    }
+
+    const body = req.body || {};
+    let type = typeof body.type === "string" ? body.type : "normal";
+    if (!SET_TYPES.has(type)) {
+      return res.status(400).json({
+        ok: false,
+        message: "Invalid set type",
+      });
+    }
+
+    const kg = parseOptionalKg(body.kg);
+    const reps = parseOptionalReps(body.reps);
+    const completed = typeof body.completed === "boolean" ? body.completed : false;
+
+    const { rows } = await pool.query(
+      `INSERT INTO sets (exercise_id, type, kg, reps, completed)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING id, exercise_id, type, kg, reps, completed, created_at`,
+      [exerciseId, type, kg ?? null, reps ?? null, completed]
+    );
+
+    res.status(201).json(rows[0]);
+  } catch (error) {
+    console.error("Error creating set:", error);
+    res.status(500).json({
+      ok: false,
+      message: "Failed to create set",
+    });
+  }
+});
+
+// Update a set by id
+app.put("/sets/:id", async (req, res) => {
+  try {
+    const setId = Number(req.params.id);
+    if (!Number.isInteger(setId) || setId <= 0) {
+      return res.status(400).json({
+        ok: false,
+        message: "Invalid set id",
+      });
+    }
+
+    const body = req.body || {};
+    const updates = [];
+    const values = [];
+    let paramIndex = 1;
+
+    if (body.type !== undefined) {
+      if (typeof body.type !== "string" || !SET_TYPES.has(body.type)) {
+        return res.status(400).json({
+          ok: false,
+          message: "Invalid set type",
+        });
+      }
+      updates.push(`type = $${paramIndex++}`);
+      values.push(body.type);
+    }
+
+    if (body.kg !== undefined) {
+      const kg = parseOptionalKg(body.kg);
+      updates.push(`kg = $${paramIndex++}`);
+      values.push(kg);
+    }
+
+    if (body.reps !== undefined) {
+      const reps = parseOptionalReps(body.reps);
+      updates.push(`reps = $${paramIndex++}`);
+      values.push(reps);
+    }
+
+    if (body.completed !== undefined) {
+      if (typeof body.completed !== "boolean") {
+        return res.status(400).json({
+          ok: false,
+          message: "Field 'completed' must be a boolean",
+        });
+      }
+      updates.push(`completed = $${paramIndex++}`);
+      values.push(body.completed);
+    }
+
+    if (updates.length === 0) {
+      return res.status(400).json({
+        ok: false,
+        message: "No valid fields to update",
+      });
+    }
+
+    values.push(setId);
+    const result = await pool.query(
+      `UPDATE sets SET ${updates.join(", ")}
+       WHERE id = $${paramIndex}
+       RETURNING id, exercise_id, type, kg, reps, completed, created_at`,
+      values
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({
+        ok: false,
+        message: "Set not found",
+      });
+    }
+
+    res.status(200).json(result.rows[0]);
+  } catch (error) {
+    console.error("Error updating set:", error);
+    res.status(500).json({
+      ok: false,
+      message: "Failed to update set",
+    });
+  }
+});
+
+// Delete a set by id
+app.delete("/sets/:id", async (req, res) => {
+  try {
+    const setId = Number(req.params.id);
+    if (!Number.isInteger(setId) || setId <= 0) {
+      return res.status(400).json({
+        ok: false,
+        message: "Invalid set id",
+      });
+    }
+
+    const result = await pool.query("DELETE FROM sets WHERE id = $1", [setId]);
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({
+        ok: false,
+        message: "Set not found",
+      });
+    }
+
+    res.status(200).json({
+      ok: true,
+      message: "Set deleted successfully",
+    });
+  } catch (error) {
+    console.error("Error deleting set:", error);
+    res.status(500).json({
+      ok: false,
+      message: "Failed to delete set",
+    });
+  }
+});
+
 // Delete an exercise by id
 app.delete("/exercises/:id", async (req, res) => {
   try {

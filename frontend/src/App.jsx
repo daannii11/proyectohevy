@@ -31,7 +31,7 @@ function App() {
 
   return (
     <main className="container">
-      <h1>Workout Tracker (React - Local State)</h1>
+      <h1>Workout Tracker</h1>
 
       {loading && <p>Loading exercises...</p>}
       {error && <p>{error}</p>}
