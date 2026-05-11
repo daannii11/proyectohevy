@@ -39,6 +39,28 @@ const pool = new Pool({
   port: Number(process.env.DB_PORT),
 });
 
+/** Creates `sets` + indexes if missing (same DDL as schema.sql). */
+async function ensureSetsSchema() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS sets (
+      id SERIAL PRIMARY KEY,
+      exercise_id INTEGER NOT NULL REFERENCES exercises (id) ON DELETE CASCADE,
+      type TEXT NOT NULL DEFAULT 'normal'
+        CHECK (type IN ('warmup', 'normal', 'failed', 'dropset')),
+      kg NUMERIC(10, 2),
+      reps INTEGER,
+      completed BOOLEAN NOT NULL DEFAULT FALSE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+  await pool.query(
+    `CREATE INDEX IF NOT EXISTS idx_sets_exercise_id ON sets (exercise_id);`
+  );
+  await pool.query(
+    `CREATE INDEX IF NOT EXISTS idx_sets_exercise_created ON sets (exercise_id, created_at);`
+  );
+}
+
 // Health/test endpoint to verify API + DB connection
 app.get("/test", async (req, res) => {
   try {
@@ -402,6 +424,17 @@ app.delete("/exercises/:id", async (req, res) => {
 
 const PORT = Number(process.env.PORT) || 3000;
 
-app.listen(PORT, () => {
-  console.log(`Backend server running on http://localhost:${PORT}`);
-});
+async function start() {
+  try {
+    await ensureSetsSchema();
+    console.log("DB: sets table is ready.");
+  } catch (err) {
+    console.error("DB: could not create sets table:", err.message);
+  }
+
+  app.listen(PORT, () => {
+    console.log(`Backend server running on http://localhost:${PORT}`);
+  });
+}
+
+start();

@@ -5,21 +5,33 @@
 body {
   margin: 0;
   font-family: Arial, sans-serif;
-  background: #f6f7fb;
-  color: #222;
+}
+
+.app-shell {
+  min-height: 100vh;
+  padding: 20px;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .container {
   max-width: 980px;
   margin: 40px auto;
-  background: #fff;
-  border: 1px solid #ddd;
   border-radius: 8px;
   padding: 20px;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
 }
 
 h1 {
   margin-top: 0;
+  margin-bottom: 0;
 }
 
 .exercise-form {
@@ -30,15 +42,12 @@ h1 {
 
 .exercise-form input {
   flex: 1;
-  border: 1px solid #ddd;
   border-radius: 6px;
   padding: 10px;
 }
 
 .exercise-form button {
-  border: 1px solid #ddd;
   border-radius: 6px;
-  background: #f0f0f0;
   padding: 10px 14px;
   cursor: pointer;
 }
@@ -50,13 +59,8 @@ table {
 
 th,
 td {
-  border: 1px solid #ddd;
   padding: 10px;
   text-align: left;
-}
-
-thead {
-  background: #f0f0f0;
 }
 
 .exercise-grid {
@@ -65,10 +69,9 @@ thead {
 }
 
 .exercise-card {
-  border: 1px solid #ddd;
   border-radius: 8px;
   padding: 12px;
-  background: #fafafa;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .exercise-card h2 {
@@ -92,7 +95,6 @@ thead {
 .set-table input,
 .set-table select {
   width: 100%;
-  border: 1px solid #ddd;
   border-radius: 6px;
   padding: 6px 8px;
 }
@@ -124,9 +126,7 @@ thead {
 
 .add-button,
 .danger-button {
-  border: 1px solid #ddd;
   border-radius: 6px;
-  background: #f0f0f0;
   padding: 8px 12px;
   cursor: pointer;
 }
@@ -137,5 +137,112 @@ thead {
 
 .empty-sets {
   margin: 0 0 12px;
+}
+
+.theme-toggle {
+  border-radius: 6px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.theme-light {
+  background: #f6f7fb;
+  color: #222;
+}
+
+.theme-light .container {
+  background: #fff;
+  border: 1px solid #ddd;
+}
+
+.theme-light .exercise-card {
+  border: 1px solid #ddd;
+  background: #fafafa;
+}
+
+.theme-light th,
+.theme-light td {
+  border: 1px solid #ddd;
+}
+
+.theme-light thead {
+  background: #f0f0f0;
+}
+
+.theme-light .exercise-form input,
+.theme-light .set-table input,
+.theme-light .set-table select {
+  background: #fff;
+  border: 1px solid #ddd;
+  color: #222;
+}
+
+.theme-light .exercise-form button,
+.theme-light .add-button,
+.theme-light .danger-button,
+.theme-light .theme-toggle {
+  border: 1px solid #ddd;
+  background: #f0f0f0;
+  color: #222;
+}
+
+.theme-light .empty-sets {
   color: #666;
+}
+
+.theme-dark {
+  background: #111827;
+  color: #e5e7eb;
+}
+
+.theme-dark .container {
+  background: #1f2937;
+  border: 1px solid #374151;
+}
+
+.theme-dark .exercise-card {
+  border: 1px solid #4b5563;
+  background: #111827;
+}
+
+.theme-dark th,
+.theme-dark td {
+  border: 1px solid #4b5563;
+}
+
+.theme-dark thead {
+  background: #374151;
+}
+
+.theme-dark .exercise-form input,
+.theme-dark .set-table input,
+.theme-dark .set-table select {
+  background: #0f172a;
+  border: 1px solid #4b5563;
+  color: #e5e7eb;
+}
+
+.theme-dark .exercise-form button,
+.theme-dark .add-button,
+.theme-dark .danger-button,
+.theme-dark .theme-toggle {
+  border: 1px solid #4b5563;
+  background: #374151;
+  color: #e5e7eb;
+}
+
+.theme-dark .danger-button {
+  color: #fca5a5;
+}
+
+.theme-dark .empty-sets {
+  color: #cbd5e1;
+}
+
+.theme-dark .row-completed {
+  background: #0c4a38;
+}
+
+.theme-dark .row-completed td {
+  color: #a7f3d0;
 }
