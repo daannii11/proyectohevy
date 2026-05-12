@@ -18,3 +18,8 @@ CREATE TABLE IF NOT EXISTS sets (
 
 CREATE INDEX IF NOT EXISTS idx_sets_exercise_id ON sets (exercise_id);
 CREATE INDEX IF NOT EXISTS idx_sets_exercise_created ON sets (exercise_id, created_at);
+
+-- If your database was created before ON DELETE CASCADE on sets.exercise_id, run once:
+-- ALTER TABLE sets DROP CONSTRAINT IF EXISTS sets_exercise_id_fkey;
+-- ALTER TABLE sets ADD CONSTRAINT sets_exercise_id_fkey
+--   FOREIGN KEY (exercise_id) REFERENCES exercises (id) ON DELETE CASCADE;

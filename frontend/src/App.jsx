@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import ExerciseCard from "./components/ExerciseCard.jsx";
+import { getApiBase } from "./config/api.js";
+import ExerciseList from "./components/ExerciseList.jsx";
 import ThemeToggle from "./components/ThemeToggle.jsx";
 
-const API_URL = "http://localhost:3000/exercises";
+const EXERCISES_URL = `${getApiBase()}/exercises`;
 const THEME_STORAGE_KEY = "workout-theme";
 
 function getInitialTheme() {
@@ -22,7 +23,7 @@ function App() {
   useEffect(() => {
     async function fetchExercises() {
       try {
-        const response = await fetch(API_URL);
+        const response = await fetch(EXERCISES_URL);
         if (!response.ok) {
           throw new Error(`Request failed with status ${response.status}`);
         }
@@ -48,6 +49,26 @@ function App() {
     setTheme((currentTheme) => (currentTheme === "light" ? "dark" : "light"));
   }
 
+  async function handleDeleteExercise(exerciseId) {
+    const previousExercises = exercises;
+    setExercises((current) =>
+      current.filter((exerciseItem) => exerciseItem.id !== exerciseId)
+    );
+
+    try {
+      const response = await fetch(`${EXERCISES_URL}/${exerciseId}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        throw new Error(`Delete failed with status ${response.status}`);
+      }
+    } catch (err) {
+      console.error(err);
+      setExercises(previousExercises);
+      setError("Could not delete exercise. Please try again.");
+    }
+  }
+
   return (
     <main className={`app-shell theme-${theme}`}>
       <section className="container">
@@ -61,11 +82,10 @@ function App() {
         {!loading && !error && exercises.length === 0 && <p>No exercises found.</p>}
 
         {!loading && !error && exercises.length > 0 && (
-          <section className="exercise-grid">
-            {exercises.map((exercise) => (
-              <ExerciseCard key={exercise.id} exercise={exercise} />
-            ))}
-          </section>
+          <ExerciseList
+            exercises={exercises}
+            onDeleteExercise={handleDeleteExercise}
+          />
         )}
         </section>
     </main>

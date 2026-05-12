@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3000";
+import { getApiBase } from "../config/api.js";
+
+const API_BASE = getApiBase();
 
 const KG_REPS_DEBOUNCE_MS = 400;
 
