@@ -74,10 +74,22 @@ td {
   transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
-.exercise-card h2 {
-  margin-top: 0;
+.exercise-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
   margin-bottom: 12px;
+}
+
+.exercise-card-header h2 {
+  margin: 0;
+  flex: 1;
   font-size: 20px;
+}
+
+.exercise-card-header .danger-button {
+  flex-shrink: 0;
 }
 
 .sets-loading {
