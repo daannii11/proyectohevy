@@ -1,0 +1,19 @@
+# Backend API (Express). Connect repo in https://dashboard.render.com
+# and set DATABASE_URL + ALLOWED_ORIGINS in the Render dashboard.
+services:
+  - type: web
+    name: proyectohevy-api
+    runtime: node
+    rootDir: frontend/backend
+    buildCommand: npm ci
+    startCommand: npm start
+    plan: free
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false
