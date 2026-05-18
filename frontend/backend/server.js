@@ -5,16 +5,42 @@ import cors from "cors";
 import pg from "pg";
 
 const { Pool } = pg;
+
+function createPool() {
+  if (process.env.DATABASE_URL) {
+    return new Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl:
+        process.env.DB_SSL === "false"
+          ? false
+          : { rejectUnauthorized: false },
+    });
+  }
+
+  return new Pool({
+    user: process.env.DB_USER,
+    host: process.env.DB_HOST,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+    port: Number(process.env.DB_PORT),
+  });
+}
+
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || "")
+  .split(",")
+  .map((o) => o.trim())
+  .filter(Boolean);
+
 const app = express();
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow tools without Origin header (curl, Postman, server-to-server).
       if (!origin) return callback(null, true);
 
-      // Allow any localhost/127.0.0.1 port in development.
       const isLocalhost = /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin);
       if (isLocalhost) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) return callback(null, true);
 
       return callback(new Error("Not allowed by CORS"));
     },
@@ -30,14 +56,7 @@ app.get("/", (req, res) => {
   });
 });
 
-// PostgreSQL connection pool using environment variables
-const pool = new Pool({
-  user: process.env.DB_USER,
-  host: process.env.DB_HOST,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  port: Number(process.env.DB_PORT),
-});
+const pool = createPool();
 
 /** Creates `sets` + indexes if missing (same DDL as schema.sql). */
 async function ensureSetsSchema() {
