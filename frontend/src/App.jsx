@@ -73,7 +73,7 @@ function App() {
     <main className={`app-shell theme-${theme}`}>
       <section className="container">
         <header className="app-header">
-          <h1>Workout Tracker</h1>
+          <h1>Workout Tracker Prueba</h1>
           <ThemeToggle theme={theme} onToggle={handleToggleTheme} />
         </header>
 
