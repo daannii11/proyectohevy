@@ -1,8 +1,17 @@
--- Initial schema for proyectohevy (exercises + sets)
+-- Initial schema for proyectohevy (routines → exercises → sets)
+CREATE TABLE IF NOT EXISTS routines (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 CREATE TABLE IF NOT EXISTS exercises (
   id SERIAL PRIMARY KEY,
-  name TEXT NOT NULL
+  name TEXT NOT NULL,
+  routine_id INTEGER NOT NULL REFERENCES routines (id) ON DELETE CASCADE
 );
+
+CREATE INDEX IF NOT EXISTS idx_exercises_routine_id ON exercises (routine_id);
 
 CREATE TABLE IF NOT EXISTS sets (
   id SERIAL PRIMARY KEY,
