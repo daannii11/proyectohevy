@@ -1,30 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-
-import { getApiBase } from "../config/api.js";
-
-const API_BASE = getApiBase();
+import { toErrorMessage } from "../lib/errors.js";
+import {
+  createSet,
+  deleteSet,
+  fetchSetsByExercise,
+  updateSet,
+} from "../lib/services/sets.js";
 
 const KG_REPS_DEBOUNCE_MS = 400;
-
-function mapRowToClient(row) {
-  return {
-    id: row.id,
-    type: row.type,
-    kg: row.kg == null ? "" : String(row.kg),
-    reps: row.reps == null ? "" : String(row.reps),
-    completed: Boolean(row.completed),
-  };
-}
-
-async function parseJsonResponse(response) {
-  const text = await response.text();
-  if (!text) return null;
-  try {
-    return JSON.parse(text);
-  } catch {
-    return null;
-  }
-}
 
 export function useSets(exerciseId) {
   const [sets, setSets] = useState([]);
@@ -40,15 +23,8 @@ export function useSets(exerciseId) {
     debounceTimers.current = {};
   }, []);
 
-  const fetchSets = useCallback(async () => {
-    const response = await fetch(`${API_BASE}/exercises/${exerciseId}/sets`);
-    const data = await parseJsonResponse(response);
-    if (!response.ok) {
-      const message =
-        data && typeof data.message === "string" ? data.message : `Request failed (${response.status})`;
-      throw new Error(message);
-    }
-    return Array.isArray(data) ? data.map(mapRowToClient) : [];
+  const reloadSets = useCallback(async () => {
+    return fetchSetsByExercise(exerciseId);
   }, [exerciseId]);
 
   useEffect(() => {
@@ -58,11 +34,11 @@ export function useSets(exerciseId) {
       setLoading(true);
       setError("");
       try {
-        const next = await fetchSets();
+        const next = await reloadSets();
         if (!cancelled) setSets(next);
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : "Could not load sets.");
+          setError(toErrorMessage(err, "Could not load sets."));
           setSets([]);
         }
       } finally {
@@ -76,22 +52,7 @@ export function useSets(exerciseId) {
       cancelled = true;
       clearDebounceTimers();
     };
-  }, [exerciseId, fetchSets, clearDebounceTimers]);
-
-  const putSet = useCallback(async (setId, body) => {
-    const response = await fetch(`${API_BASE}/sets/${setId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    const data = await parseJsonResponse(response);
-    if (!response.ok) {
-      const message =
-        data && typeof data.message === "string" ? data.message : `Update failed (${response.status})`;
-      throw new Error(message);
-    }
-    return mapRowToClient(data);
-  }, []);
+  }, [exerciseId, reloadSets, clearDebounceTimers]);
 
   const scheduleKgRepsPersist = useCallback(
     (setId) => {
@@ -105,20 +66,19 @@ export function useSets(exerciseId) {
         if (!row) return;
 
         try {
-          const updated = await putSet(setId, { kg: row.kg, reps: row.reps });
+          const updated = await updateSet(setId, { kg: row.kg, reps: row.reps });
           setSets((prev) => prev.map((s) => (s.id === setId ? updated : s)));
         } catch (err) {
-          setError(err instanceof Error ? err.message : "Could not save set.");
+          setError(toErrorMessage(err, "Could not save set."));
           try {
-            const fresh = await fetchSets();
-            setSets(fresh);
+            setSets(await reloadSets());
           } catch {
             /* keep last known sets */
           }
         }
       }, KG_REPS_DEBOUNCE_MS);
     },
-    [putSet, fetchSets]
+    [reloadSets]
   );
 
   const handleUpdateSet = useCallback(
@@ -135,12 +95,12 @@ export function useSets(exerciseId) {
       if (field === "type") {
         void (async () => {
           try {
-            const updated = await putSet(setId, { type: value });
+            const updated = await updateSet(setId, { type: value });
             setSets((prev) => prev.map((s) => (s.id === setId ? updated : s)));
           } catch (err) {
-            setError(err instanceof Error ? err.message : "Could not save set type.");
+            setError(toErrorMessage(err, "Could not save set type."));
             try {
-              setSets(await fetchSets());
+              setSets(await reloadSets());
             } catch {
               /* ignore */
             }
@@ -148,7 +108,7 @@ export function useSets(exerciseId) {
         })();
       }
     },
-    [putSet, fetchSets, scheduleKgRepsPersist]
+    [reloadSets, scheduleKgRepsPersist]
   );
 
   const handleToggleCompleted = useCallback(
@@ -163,68 +123,44 @@ export function useSets(exerciseId) {
 
       void (async () => {
         try {
-          const updated = await putSet(setId, { completed });
+          const updated = await updateSet(setId, { completed });
           setSets((prev) => prev.map((s) => (s.id === setId ? updated : s)));
         } catch (err) {
-          setError(err instanceof Error ? err.message : "Could not update completion.");
+          setError(toErrorMessage(err, "Could not update completion."));
           try {
-            setSets(await fetchSets());
+            setSets(await reloadSets());
           } catch {
             /* ignore */
           }
         }
       })();
     },
-    [putSet, fetchSets]
+    [reloadSets]
   );
 
   const handleAddSet = useCallback(async () => {
     setError("");
     try {
-      const response = await fetch(`${API_BASE}/exercises/${exerciseId}/sets`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "normal",
-          kg: null,
-          reps: null,
-          completed: false,
-        }),
-      });
-      const data = await parseJsonResponse(response);
-      if (!response.ok) {
-        const message =
-          data && typeof data.message === "string" ? data.message : `Create failed (${response.status})`;
-        throw new Error(message);
-      }
-      setSets((prev) => [...prev, mapRowToClient(data)]);
+      const created = await createSet(exerciseId);
+      setSets((prev) => [...prev, created]);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not add set.");
+      setError(toErrorMessage(err, "Could not add set."));
     }
   }, [exerciseId]);
 
-  const handleDeleteSet = useCallback(
-    async (setId) => {
-      setError("");
-      try {
-        const response = await fetch(`${API_BASE}/sets/${setId}`, { method: "DELETE" });
-        const data = await parseJsonResponse(response);
-        if (!response.ok) {
-          const message =
-            data && typeof data.message === "string" ? data.message : `Delete failed (${response.status})`;
-          throw new Error(message);
-        }
-        setSets((prev) => prev.filter((s) => s.id !== setId));
-        if (debounceTimers.current[setId]) {
-          clearTimeout(debounceTimers.current[setId]);
-          delete debounceTimers.current[setId];
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Could not delete set.");
+  const handleDeleteSet = useCallback(async (setId) => {
+    setError("");
+    try {
+      await deleteSet(setId);
+      setSets((prev) => prev.filter((s) => s.id !== setId));
+      if (debounceTimers.current[setId]) {
+        clearTimeout(debounceTimers.current[setId]);
+        delete debounceTimers.current[setId];
       }
-    },
-    []
-  );
+    } catch (err) {
+      setError(toErrorMessage(err, "Could not delete set."));
+    }
+  }, []);
 
   return {
     sets,

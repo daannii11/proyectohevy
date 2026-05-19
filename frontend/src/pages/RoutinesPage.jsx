@@ -1,47 +1,18 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import CreateRoutineModal from "../components/CreateRoutineModal.jsx";
 import RoutineCard from "../components/RoutineCard.jsx";
-import {
-  MAX_ROUTINES,
-  createRoutine,
-  deleteRoutine,
-  fetchRoutines,
-} from "../lib/api.js";
+import { MAX_ROUTINES } from "../lib/services/routines.js";
+import { useRoutines } from "../hooks/useRoutines.js";
+import { toErrorMessage } from "../lib/errors.js";
 
 function RoutinesPage() {
-  const [routines, setRoutines] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const { routines, loading, error, atLimit, addRoutine, removeRoutine } = useRoutines();
+  const [actionError, setActionError] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    async function load() {
-      setLoading(true);
-      try {
-        const data = await fetchRoutines();
-        if (!cancelled) setRoutines(data);
-      } catch (err) {
-        if (!cancelled) {
-          setError(err instanceof Error ? err.message : "Could not load routines.");
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const atLimit = routines.length >= MAX_ROUTINES;
-
   async function handleCreate(name) {
-    const created = await createRoutine(name);
-    setRoutines((current) => [...current, created]);
+    setActionError("");
+    await addRoutine(name);
   }
 
   async function handleDelete(routineId) {
@@ -54,16 +25,15 @@ function RoutinesPage() {
       return;
     }
 
-    const previous = routines;
-    setRoutines((current) => current.filter((item) => item.id !== routineId));
-
+    setActionError("");
     try {
-      await deleteRoutine(routineId);
+      await removeRoutine(routineId);
     } catch (err) {
-      setRoutines(previous);
-      setError(err instanceof Error ? err.message : "Could not delete routine.");
+      setActionError(toErrorMessage(err, "Could not delete routine."));
     }
   }
+
+  const displayError = actionError || error;
 
   return (
     <section className="routines-page">
@@ -89,9 +59,9 @@ function RoutinesPage() {
       )}
 
       {loading && <p>Loading routines...</p>}
-      {error && <p className="page-error">{error}</p>}
+      {displayError && <p className="page-error">{displayError}</p>}
 
-      {!loading && !error && routines.length === 0 && (
+      {!loading && !displayError && routines.length === 0 && (
         <p>No routines yet. Create your first one to start tracking workouts.</p>
       )}
 
@@ -108,7 +78,6 @@ function RoutinesPage() {
         onClose={() => setIsModalOpen(false)}
         onCreate={handleCreate}
       />
-
     </section>
   );
 }
