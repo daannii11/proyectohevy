@@ -58,8 +58,50 @@ app.get("/", (req, res) => {
 
 const pool = createPool();
 
-/** Creates `sets` + indexes if missing (same DDL as schema.sql). */
-async function ensureSetsSchema() {
+const MAX_ROUTINES = 5;
+
+/** Creates routines / sets tables if missing (aligned with supabase/migrations). */
+async function ensureSchema() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS routines (
+      id SERIAL PRIMARY KEY,
+      name TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS exercises (
+      id SERIAL PRIMARY KEY,
+      name TEXT NOT NULL
+    );
+  `);
+
+  await pool.query(`
+    DO $$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'exercises' AND column_name = 'routine_id'
+      ) THEN
+        ALTER TABLE exercises ADD COLUMN routine_id INTEGER;
+      END IF;
+    END $$;
+  `);
+
+  await pool.query(`
+    DO $$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'exercises_routine_id_fkey'
+      ) THEN
+        ALTER TABLE exercises
+          ADD CONSTRAINT exercises_routine_id_fkey
+          FOREIGN KEY (routine_id) REFERENCES routines (id) ON DELETE CASCADE;
+      END IF;
+    END $$;
+  `);
+
   await pool.query(`
     CREATE TABLE IF NOT EXISTS sets (
       id SERIAL PRIMARY KEY,
@@ -78,7 +120,137 @@ async function ensureSetsSchema() {
   await pool.query(
     `CREATE INDEX IF NOT EXISTS idx_sets_exercise_created ON sets (exercise_id, created_at);`
   );
+  await pool.query(
+    `CREATE INDEX IF NOT EXISTS idx_exercises_routine_id ON exercises (routine_id);`
+  );
 }
+
+function parsePositiveInt(value) {
+  const n = Number(value);
+  if (!Number.isInteger(n) || n <= 0) return null;
+  return n;
+}
+
+async function routineExists(routineId) {
+  const { rows } = await pool.query("SELECT 1 FROM routines WHERE id = $1", [routineId]);
+  return rows.length > 0;
+}
+
+async function countRoutines() {
+  const { rows } = await pool.query("SELECT COUNT(*)::int AS count FROM routines");
+  return rows[0].count;
+}
+
+// List all routines
+app.get("/routines", async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      "SELECT id, name, created_at FROM routines ORDER BY created_at ASC, id ASC"
+    );
+    res.status(200).json(rows);
+  } catch (error) {
+    console.error("Error fetching routines:", error);
+    res.status(500).json({ ok: false, message: "Failed to fetch routines" });
+  }
+});
+
+// Create a routine (max 5)
+app.post("/routines", async (req, res) => {
+  try {
+    const { name } = req.body;
+    if (!name || typeof name !== "string" || !name.trim()) {
+      return res.status(400).json({ ok: false, message: "Field 'name' is required" });
+    }
+
+    const total = await countRoutines();
+    if (total >= MAX_ROUTINES) {
+      return res.status(409).json({
+        ok: false,
+        message: `Maximum of ${MAX_ROUTINES} routines allowed`,
+      });
+    }
+
+    const result = await pool.query(
+      "INSERT INTO routines (name) VALUES ($1) RETURNING id, name, created_at",
+      [name.trim()]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error("Error creating routine:", error);
+    res.status(500).json({ ok: false, message: "Failed to create routine" });
+  }
+});
+
+// Delete a routine (cascades to exercises and sets)
+app.delete("/routines/:id", async (req, res) => {
+  try {
+    const id = parsePositiveInt(req.params.id);
+    if (!id) {
+      return res.status(400).json({ ok: false, message: "Invalid routine id" });
+    }
+
+    const result = await pool.query("DELETE FROM routines WHERE id = $1", [id]);
+    if (result.rowCount === 0) {
+      return res.status(404).json({ ok: false, message: "Routine not found" });
+    }
+
+    res.status(200).json({ ok: true, message: "Routine deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting routine:", error);
+    res.status(500).json({ ok: false, message: "Failed to delete routine" });
+  }
+});
+
+// Exercises for one routine
+app.get("/routines/:routineId/exercises", async (req, res) => {
+  try {
+    const routineId = parsePositiveInt(req.params.routineId);
+    if (!routineId) {
+      return res.status(400).json({ ok: false, message: "Invalid routine id" });
+    }
+
+    if (!(await routineExists(routineId))) {
+      return res.status(404).json({ ok: false, message: "Routine not found" });
+    }
+
+    const { rows } = await pool.query(
+      "SELECT id, name, routine_id FROM exercises WHERE routine_id = $1 ORDER BY id ASC",
+      [routineId]
+    );
+    res.status(200).json(rows);
+  } catch (error) {
+    console.error("Error fetching routine exercises:", error);
+    res.status(500).json({ ok: false, message: "Failed to fetch exercises" });
+  }
+});
+
+// Create exercise inside a routine
+app.post("/routines/:routineId/exercises", async (req, res) => {
+  try {
+    const routineId = parsePositiveInt(req.params.routineId);
+    if (!routineId) {
+      return res.status(400).json({ ok: false, message: "Invalid routine id" });
+    }
+
+    if (!(await routineExists(routineId))) {
+      return res.status(404).json({ ok: false, message: "Routine not found" });
+    }
+
+    const { name } = req.body;
+    if (!name || typeof name !== "string" || !name.trim()) {
+      return res.status(400).json({ ok: false, message: "Field 'name' is required" });
+    }
+
+    const result = await pool.query(
+      "INSERT INTO exercises (name, routine_id) VALUES ($1, $2) RETURNING id, name, routine_id",
+      [name.trim(), routineId]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error("Error creating exercise:", error);
+    res.status(500).json({ ok: false, message: "Failed to create exercise" });
+  }
+});
 
 // Health/test endpoint to verify API + DB connection
 app.get("/test", async (req, res) => {
@@ -97,49 +269,16 @@ app.get("/test", async (req, res) => {
   }
 });
 
-// Get all exercises
+// Legacy: list all exercises (prefer /routines/:id/exercises)
 app.get("/exercises", async (req, res) => {
   try {
-    // 1) Read all rows from PostgreSQL, ordered by id.
     const { rows } = await pool.query(
-      "SELECT id, name FROM exercises ORDER BY id ASC"
+      "SELECT id, name, routine_id FROM exercises ORDER BY id ASC"
     );
-
-    // 2) Return the list as JSON.
     res.status(200).json(rows);
   } catch (error) {
-    // 3) Log the error and send a safe server error response.
     console.error("Error fetching exercises:", error);
-    res.status(500).json({
-      ok: false,
-      message: "Failed to fetch exercises",
-    });
-  }
-});
-
-// Create a new exercise
-app.post("/exercises", async (req, res) => {
-  try {
-    const { name } = req.body;
-    if (!name || typeof name !== "string" || !name.trim()) {
-      return res.status(400).json({
-        ok: false,
-        message: "Field 'name' is required",
-      });
-    }
-
-    const result = await pool.query(
-      "INSERT INTO exercises (name) VALUES ($1) RETURNING id, name",
-      [name.trim()]
-    );
-
-    res.status(201).json(result.rows[0]);
-  } catch (error) {
-    console.error("Error creating exercise:", error);
-    res.status(500).json({
-      ok: false,
-      message: "Failed to create exercise",
-    });
+    res.status(500).json({ ok: false, message: "Failed to fetch exercises" });
   }
 });
 
@@ -445,8 +584,8 @@ const PORT = Number(process.env.PORT) || 3000;
 
 async function start() {
   try {
-    await ensureSetsSchema();
-    console.log("DB: sets table is ready.");
+    await ensureSchema();
+    console.log("DB: routines, exercises, and sets are ready.");
   } catch (err) {
     console.error("DB: could not create sets table:", err.message);
   }
