@@ -1,10 +1,10 @@
 import { assertNoSupabaseError } from "../errors.js";
-import { supabase } from "../supabase.js";
+import { getSupabase } from "../supabase.js";
 
 export const MAX_ROUTINES = 5;
 
 export async function fetchRoutines() {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from("routines")
     .select("id, name, created_at")
     .order("created_at", { ascending: true })
@@ -15,7 +15,7 @@ export async function fetchRoutines() {
 }
 
 export async function countRoutines() {
-  const { count, error } = await supabase
+  const { count, error } = await getSupabase()
     .from("routines")
     .select("*", { count: "exact", head: true });
 
@@ -29,7 +29,7 @@ export async function createRoutine(name) {
     throw new Error(`Maximum of ${MAX_ROUTINES} routines allowed`);
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from("routines")
     .insert({ name: name.trim() })
     .select("id, name, created_at")
@@ -40,6 +40,6 @@ export async function createRoutine(name) {
 }
 
 export async function deleteRoutine(routineId) {
-  const { error } = await supabase.from("routines").delete().eq("id", routineId);
+  const { error } = await getSupabase().from("routines").delete().eq("id", routineId);
   assertNoSupabaseError(error, "Failed to delete routine");
 }

@@ -423,3 +423,20 @@ td {
   border-color: #92400e;
   color: #fde68a;
 }
+
+.config-error-panel {
+  max-width: 640px;
+}
+
+.config-error-panel h1 {
+  margin-top: 0;
+}
+
+.config-error-panel ol {
+  line-height: 1.6;
+}
+
+.config-hint {
+  font-size: 14px;
+  opacity: 0.85;
+}

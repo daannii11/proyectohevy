@@ -1,8 +1,8 @@
 import { assertNoSupabaseError } from "../errors.js";
-import { supabase } from "../supabase.js";
+import { getSupabase } from "../supabase.js";
 
 export async function fetchExercisesByRoutine(routineId) {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from("exercises")
     .select("id, name, routine_id")
     .eq("routine_id", routineId)
@@ -13,7 +13,7 @@ export async function fetchExercisesByRoutine(routineId) {
 }
 
 export async function createExercise(routineId, name) {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from("exercises")
     .insert({ name: name.trim(), routine_id: routineId })
     .select("id, name, routine_id")
@@ -24,6 +24,6 @@ export async function createExercise(routineId, name) {
 }
 
 export async function deleteExercise(exerciseId) {
-  const { error } = await supabase.from("exercises").delete().eq("id", exerciseId);
+  const { error } = await getSupabase().from("exercises").delete().eq("id", exerciseId);
   assertNoSupabaseError(error, "Failed to delete exercise");
 }

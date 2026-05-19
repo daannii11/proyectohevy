@@ -1,5 +1,5 @@
 import { assertNoSupabaseError } from "../errors.js";
-import { supabase } from "../supabase.js";
+import { getSupabase } from "../supabase.js";
 
 const SET_TYPES = new Set(["warmup", "normal", "failed", "dropset"]);
 
@@ -30,7 +30,7 @@ export function mapSetRowToClient(row) {
 }
 
 export async function fetchSetsByExercise(exerciseId) {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from("sets")
     .select("id, exercise_id, type, kg, reps, completed, created_at")
     .eq("exercise_id", exerciseId)
@@ -42,7 +42,7 @@ export async function fetchSetsByExercise(exerciseId) {
 }
 
 export async function createSet(exerciseId) {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from("sets")
     .insert({
       exercise_id: exerciseId,
@@ -72,7 +72,7 @@ export async function updateSet(setId, fields) {
   if (fields.reps !== undefined) payload.reps = parseOptionalReps(fields.reps);
   if (fields.completed !== undefined) payload.completed = fields.completed;
 
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from("sets")
     .update(payload)
     .eq("id", setId)
@@ -84,6 +84,6 @@ export async function updateSet(setId, fields) {
 }
 
 export async function deleteSet(setId) {
-  const { error } = await supabase.from("sets").delete().eq("id", setId);
+  const { error } = await getSupabase().from("sets").delete().eq("id", setId);
   assertNoSupabaseError(error, "Failed to delete set");
 }

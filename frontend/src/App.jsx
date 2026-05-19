@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import AppShell from "./components/AppShell.jsx";
+import SupabaseConfigBanner from "./components/SupabaseConfigBanner.jsx";
 import RoutineDetailPage from "./pages/RoutineDetailPage.jsx";
 import RoutinesPage from "./pages/RoutinesPage.jsx";
+import { isSupabaseConfigured } from "./lib/supabase.js";
 
 const THEME_STORAGE_KEY = "workout-theme";
 
@@ -14,7 +16,7 @@ function getInitialTheme() {
   return "light";
 }
 
-function App() {
+function AppRoutes() {
   const [theme, setTheme] = useState(getInitialTheme);
 
   useEffect(() => {
@@ -36,6 +38,14 @@ function App() {
       </Route>
     </Routes>
   );
+}
+
+function App() {
+  if (!isSupabaseConfigured()) {
+    return <SupabaseConfigBanner />;
+  }
+
+  return <AppRoutes />;
 }
 
 export default App;
