@@ -1,69 +1,37 @@
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import AddExerciseForm from "../components/AddExerciseForm.jsx";
 import ExerciseList from "../components/ExerciseList.jsx";
-import {
-  createRoutineExercise,
-  deleteExercise,
-  fetchRoutineExercises,
-} from "../lib/api.js";
+import { useExercises } from "../hooks/useExercises.js";
+import { toErrorMessage } from "../lib/errors.js";
 
 function RoutineDetailPage() {
   const { routineId } = useParams();
   const numericRoutineId = Number(routineId);
 
-  const [exercises, setExercises] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
-  const loadExercises = useCallback(async () => {
-    if (!Number.isInteger(numericRoutineId) || numericRoutineId <= 0) {
-      throw new Error("Invalid routine id in URL.");
-    }
-    return fetchRoutineExercises(numericRoutineId);
-  }, [numericRoutineId]);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function load() {
-      setLoading(true);
-      setError("");
-      try {
-        const data = await loadExercises();
-        if (!cancelled) setExercises(data);
-      } catch (err) {
-        if (!cancelled) {
-          setError(err instanceof Error ? err.message : "Could not load exercises.");
-          setExercises([]);
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, [loadExercises]);
+  const { exercises, loading, error, addExercise, removeExercise } =
+    useExercises(numericRoutineId);
+  const [actionError, setActionError] = useState("");
 
   async function handleAddExercise(name) {
-    const created = await createRoutineExercise(numericRoutineId, name);
-    setExercises((current) => [...current, created]);
+    setActionError("");
+    try {
+      await addExercise(name);
+    } catch (err) {
+      setActionError(toErrorMessage(err, "Could not add exercise."));
+    }
   }
 
   async function handleDeleteExercise(exerciseId) {
-    const previous = exercises;
-    setExercises((current) => current.filter((item) => item.id !== exerciseId));
-
+    setActionError("");
     try {
-      await deleteExercise(exerciseId);
+      await removeExercise(exerciseId);
     } catch (err) {
-      setExercises(previous);
-      setError(err instanceof Error ? err.message : "Could not delete exercise.");
+      setActionError(toErrorMessage(err, "Could not delete exercise."));
     }
   }
+
+  const displayError = actionError || error;
 
   return (
     <section className="routine-detail-page">
@@ -78,8 +46,8 @@ function RoutineDetailPage() {
       <AddExerciseForm onAddExercise={handleAddExercise} />
 
       {loading && <p>Loading exercises...</p>}
-      {error && <p className="page-error">{error}</p>}
-      {!loading && !error && exercises.length === 0 && (
+      {displayError && <p className="page-error">{displayError}</p>}
+      {!loading && !displayError && exercises.length === 0 && (
         <p>No exercises in this routine yet. Add one above.</p>
       )}
 
