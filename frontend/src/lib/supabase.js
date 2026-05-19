@@ -1,14 +1,29 @@
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const rawUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 let client = null;
 
+/**
+ * createClient expects the project URL only:
+ *   https://YOUR_REF.supabase.co
+ * NOT the REST endpoint (…/rest/v1) — that causes
+ * "Invalid path specified in request URL".
+ */
+export function normalizeSupabaseUrl(url) {
+  if (typeof url !== "string") return "";
+  let normalized = url.trim();
+  normalized = normalized.replace(/\/+$/, "");
+  normalized = normalized.replace(/\/rest\/v1$/i, "");
+  return normalized;
+}
+
+const supabaseUrl = normalizeSupabaseUrl(rawUrl);
+
 export function isSupabaseConfigured() {
   return Boolean(
-    typeof supabaseUrl === "string" &&
-      supabaseUrl.trim() !== "" &&
+    supabaseUrl !== "" &&
       typeof supabaseAnonKey === "string" &&
       supabaseAnonKey.trim() !== ""
   );
@@ -23,7 +38,7 @@ export function getSupabase() {
   }
 
   if (!client) {
-    client = createClient(supabaseUrl, supabaseAnonKey);
+    client = createClient(supabaseUrl, supabaseAnonKey.trim());
   }
 
   return client;

@@ -26,6 +26,11 @@ function SupabaseConfigBanner() {
           Names must start with <code>VITE_</code> so Vite can embed them at
           build time.
         </p>
+        <p className="config-hint">
+          <code>VITE_SUPABASE_URL</code> must be the project URL only (e.g.{" "}
+          <code>https://xxx.supabase.co</code>), not{" "}
+          <code>…/rest/v1</code>.
+        </p>
       </section>
     </main>
   );
